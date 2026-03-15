@@ -1,97 +1,64 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
-from core import Point, Line, Polygon, Shape
+from core.shapes import Segment, Line, Point
 
 
-def draw_points(points: list[Point]) -> None:
-    xs = [p.x for p in points]
-    ys = [p.y for p in points]
+class Drawer:
 
-    plt.scatter(xs, ys)
+    def __init__(self):
+        self._lines: list[Line] = []
+        self._segments: list[Segment] = []
+        self._points: list[Point] = []
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Wykres punktów")
+    def line(self, line: Line) -> "Drawer":
+        self._lines.append(line)
+        return self
 
-    plt.grid(True)
-    plt.show()
+    def segment(self, segment: Segment) -> "Drawer":
+        self._segments.append(segment)
+        return self
 
-def draw_line_between_nodes(points: list[Point]) -> None:
-    xs = [p.x for p in points]
-    ys = [p.y for p in points]
+    def point(self, point: Point) -> "Drawer":
+        self._points.append(point)
+        return self
 
-    plt.scatter(xs, ys)
+    def points(self, points: list[Point]) -> "Drawer":
+        self._points.extend(points)
+        return self
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Wykres połączonych punktów")
+    def draw(self, x_range=(-10, 10)):
+        plt.figure()
 
-    plt.plot(xs, ys, marker="o")
+        for line in self._lines:
+            if line.b != 0:
+                x = np.linspace(x_range[0], x_range[1], 400)
+                y = (-line.a * x - line.c) / line.b
+                plt.plot(x, y, label=f"{line.a}x + {line.b}y + {line.c} = 0")
+            else:
+                x_val = -line.c / line.a
+                y = np.linspace(x_range[0], x_range[1], 400)
+                x = np.full_like(y, x_val)
+                plt.plot(x, y, label=f"x = {x_val}")
 
-    plt.grid(True)
-    plt.show()
+        for segment in self._segments:
+            xs = [segment.start.x, segment.end.x]
+            ys = [segment.start.y, segment.end.y]
+            plt.plot(xs, ys, marker="o", label="segment")
 
-def draw_line(line: Line) -> None:
-    xs = [line.start.x, line.end.x]
-    ys = [line.start.y, line.end.y]
+        if self._points:
+            xs = [p.x for p in self._points]
+            ys = [p.y for p in self._points]
 
-    plt.plot(xs, ys, marker="o")
+            plt.scatter(xs, ys)
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Wykres odcinka")
-    plt.grid(True)
-    plt.show()
+            for p in self._points:
+                plt.text(p.x, p.y, f"({p.x}, {p.y})")
 
-def draw_polygon(polygon: Polygon) -> None:
-    x = []
-    y = []
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.grid(True)
+        plt.axis("equal")
+        plt.legend()
 
-    for p in polygon.vertices:
-        x.append(p.x)
-        y.append(p.y)
-
-    x.append(polygon.vertices[0].x)
-    y.append(polygon.vertices[0].y)
-
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Wykres wielokąta")
-
-    plt.plot(x, y, marker="o")
-
-    plt.grid(True)
-    plt.show()
-
-def draw_elements(elements: list[list[Point]]) -> None:
-    plt.figure()
-
-    for element_points in elements:
-        if not element_points:
-            continue
-
-        xs = [p.x for p in element_points]
-        ys = [p.y for p in element_points]
-
-        xs.append(element_points[0].x)
-        ys.append(element_points[0].y)
-
-        # rysowanie punktów
-        plt.scatter(xs, ys)
-
-        # rysowanie połączeń tylko w obrębie jednej listy
-        if len(element_points) > 1:
-            plt.plot(xs, ys, marker="o")
-
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Wykres elementów")
-    plt.grid(True)
-    plt.show()
-
-def draw_shapes(shapes: list[Shape]) -> None:
-    elements = []
-    for shape in shapes:
-        elements.append(shape.get_points())
-
-    draw_elements(elements)
+        plt.show()
